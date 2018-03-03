@@ -8,11 +8,11 @@ import time
 import numpy as np
 
 #Reading the Image
-img = cv2.imread('/home/jason/Desktop/laserline.jpg')
+img = cv2.imread('/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/laserline.jpg')
 
 #Display Image
 imS = cv2.resize(img, (960, 540))		
-cv2.imshow('image',imS) 				#Feedback: show resized image
+#cv2.imshow('image',imS) 				#Feedback: show resized image
 
 #Masking With lines
 #Desc:	Draw a vertical line and give it a desired width. Results in
@@ -21,16 +21,43 @@ cv2.line(imS, (100, 1), (100, 540), (0,0,0), 50)
 
 
 
-cv2.imshow("lalala", imS)				#Feedback: One Masking line
+#cv2.imshow("line", imS)				#Feedback: One Masking line
 
-for i in range(1,10):
-	inc = i*50
-	imS = cv2.resize(img, (960, 540))
-	cv2.line(imS, (100+inc, 1), (100+inc, 540), (0,0,0), 50)
-	cv2.line(imS, (200+inc, 1), (200+inc, 540), (0,0,0), 50)
+xcount = 1
+gap = 50
+
+for i in range(0,xcount):
 	
-	time.sleep(2)
-	cv2.imshow("mask", imS)				#Feedback: Masking Animation
+	#Slicing Math
+	inc = i*gap
+	pos1 = -960 + inc
+	pos2 =  960 + gap + inc
+	width = 960*2
+	
+	imS = cv2.resize(img, (960, 540))
+	cv2.line(imS, (pos1, 1), (pos1, 540), (0,0,0), width)
+	cv2.line(imS, (pos2, 1), (pos2, 540), (0,0,0), width)
+	
+	cv2.imshow("Slice", imS)				#Feedback: Slicing Animation
+	
+	#Masking Process
+	hsv = cv2.cvtColor(imS, cv2.COLOR_BGR2HSV)
+	h = 19
+	s = 218
+	v = 128	
+	lower = (h - 10, 100, 100)
+	upper = (h + 10, 255, 255)
+	
+	mask = cv2.inRange(hsv, lower, upper)
+	
+	cv2.imshow('mask', mask)				#Feedback: Masking Animation
+	
+	
+	
+	
+	
+	time.sleep(3)
+	
 	if cv2.waitKey(1) > -1:
 		break
 
