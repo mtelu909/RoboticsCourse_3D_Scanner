@@ -7,8 +7,11 @@ import cv2
 import time
 import numpy as np
 
+#Setting up Functions
+
+
 #Reading the Image
-img = cv2.imread('/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/laserline.jpg')
+img = cv2.imread('/home/jason/RoboticsCourse_3D_Scanner/3D_Scan/laserline.jpg')
 
 #Display Image
 imS = cv2.resize(img, (960, 540))		
@@ -23,10 +26,10 @@ cv2.line(imS, (100, 1), (100, 540), (0,0,0), 50)
 
 #cv2.imshow("line", imS)				#Feedback: One Masking line
 
-xcount = 1
+xcount = 20
 gap = 50
 
-for i in range(0,xcount):
+for i in range(0,xcount): 
 	
 	#Slicing Math
 	inc = i*gap
@@ -42,21 +45,25 @@ for i in range(0,xcount):
 	
 	#Masking Process
 	hsv = cv2.cvtColor(imS, cv2.COLOR_BGR2HSV)
-	h = 19
-	s = 218
-	v = 128	
+	h = 225 * 176/255
+	s = 240
+	v = 120
 	lower = (h - 10, 100, 100)
-	upper = (h + 10, 255, 255)
-	
+	upper = (h + 15, 255, 255)
 	mask = cv2.inRange(hsv, lower, upper)
+	for j in range(1):
+		mask = cv2.erode(mask, None, iterations = 1)
+		mask = cv2.dilate(mask, None, iterations = 1)
 	
 	cv2.imshow('mask', mask)				#Feedback: Masking Animation
 	
+	#x,y = centroid(mask)
+	#c = remember(c, (x,y))
+	#draw(frame, c, (28,172,244))
 	
 	
 	
-	
-	time.sleep(3)
+	time.sleep(1)
 	
 	if cv2.waitKey(1) > -1:
 		break
