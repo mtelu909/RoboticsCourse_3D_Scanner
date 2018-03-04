@@ -31,8 +31,11 @@ def remember(points, point):
 			return points
 	points.append((x, y))	
 	return points
-	
+
+#Setting up Variables	
 c = []
+xarr = []
+yarr = []
 
 #Reading the Image
 img = cv2.imread('/home/jason/RoboticsCourse_3D_Scanner/3D_Scan/laserline.jpg')
@@ -50,8 +53,8 @@ cv2.line(imS, (100, 1), (100, 540), (0,0,0), 50)
 
 #cv2.imshow("line", imS)					#Feedback: Masking line
 
-xcount = 5
-gap = 25
+xcount = 48
+gap = 20
 
 for i in range(0,xcount): 
 	
@@ -85,16 +88,19 @@ for i in range(0,xcount):
 	c = remember(c, (x,y))
 	draw(imS, c, (28,172,244))				#Feedback: Drawing Animation
 	
-	
+	xarr.append(x)
+	yarr.append(y)
 	
 	time.sleep(0.1)
 	
 	if cv2.waitKey(1) > -1:
 		break
 
-print(c)
-#print(x)	
-
+print('c =', c)
+print()
+print('xarr = ', xarr)	
+print()
+print('yarr = ', yarr)
 
 
 
