@@ -8,14 +8,38 @@ import time
 import numpy as np
 
 #Setting up Functions
+def centroid( mask ):
+	M = cv2.moments(mask,True)
+	m00 = M['m00']
+	if m00 == 0:
+		x = -100 
+		y = -100
+	else:
+		x = int( M['m10']/m00 )
+		y = int( M['m01']/m00 )
+	return x,y
 
+def draw(image, centroids, color):
+	cv2.polylines(image, np.array([centroids],dtype = np.int32), False, color, 3)
+	cv2.imshow('EML4840: Video', image)
+	
+def remember(points, point):
+	if point[0] <= 0 and point[1] <= 0:
+		return points
+	if len(points) != 0:
+		if points[-1] == point:
+			return points
+	points.append((x, y))	
+	return points
+	
+c = []
 
 #Reading the Image
 img = cv2.imread('/home/jason/RoboticsCourse_3D_Scanner/3D_Scan/laserline.jpg')
 
 #Display Image
 imS = cv2.resize(img, (960, 540))		
-#cv2.imshow('image',imS) 				#Feedback: show resized image
+#cv2.imshow('image',imS) 				#Feedback: Resized image
 
 #Masking With lines
 #Desc:	Draw a vertical line and give it a desired width. Results in
@@ -24,10 +48,10 @@ cv2.line(imS, (100, 1), (100, 540), (0,0,0), 50)
 
 
 
-#cv2.imshow("line", imS)				#Feedback: One Masking line
+#cv2.imshow("line", imS)					#Feedback: Masking line
 
-xcount = 20
-gap = 50
+xcount = 5
+gap = 25
 
 for i in range(0,xcount): 
 	
@@ -41,7 +65,7 @@ for i in range(0,xcount):
 	cv2.line(imS, (pos1, 1), (pos1, 540), (0,0,0), width)
 	cv2.line(imS, (pos2, 1), (pos2, 540), (0,0,0), width)
 	
-	cv2.imshow("Slice", imS)				#Feedback: Slicing Animation
+	#cv2.imshow("Slice", imS)				#Feedback: Slicing Animation
 	
 	#Masking Process
 	hsv = cv2.cvtColor(imS, cv2.COLOR_BGR2HSV)
@@ -57,18 +81,19 @@ for i in range(0,xcount):
 	
 	cv2.imshow('mask', mask)				#Feedback: Masking Animation
 	
-	#x,y = centroid(mask)
-	#c = remember(c, (x,y))
-	#draw(frame, c, (28,172,244))
+	x,y = centroid(mask)
+	c = remember(c, (x,y))
+	draw(imS, c, (28,172,244))				#Feedback: Drawing Animation
 	
 	
 	
-	time.sleep(1)
+	time.sleep(0.1)
 	
 	if cv2.waitKey(1) > -1:
 		break
 
-	
+print(c)
+#print(x)	
 
 
 
