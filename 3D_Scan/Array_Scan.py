@@ -9,10 +9,16 @@ import numpy as np
 
 # User Inputs ----------------------------------------------------------
 xcount = 48				# Number of slices
+scan_max = 5				# Number of pictures taken
 gap = 20				# Pixel Width of slice 
 H = 540					# Pixel Height of Window
 W = 960					# Pixel Width of Window
 scale = 1				# Conversion pixels to inches (or mm)
+
+location = '/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/'
+basename = 'laserline'
+filetype = '.jpg'
+
 #-----------------------------------------------------------------------
 
 # Setting up Functions
@@ -40,97 +46,103 @@ def remember(points, point):
 	points.append((x, y))	
 	return points
 
-# Setting up Variables	
-c = []
-xarr = []
-yarr = []
-zdist = []
-
-# Reading the Image
-img = cv2.imread('/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/laserline1.jpg')
-
-# Display Image
-imS = cv2.resize(img, (W, H))		
-#cv2.imshow('image',imS) 				# Feedback: Resized image
 
 
-for i in range(0,xcount): 
+# MAIN LOOP-------------------------------------------------------------
+
+matrix = [[0 for x in range(xcount)] for y in range(scan_max)]
+
+for scan in range(0,scan_max):
+
+	# Setting up Variables	
+	index = str(scan)
+	filename = location + basename + index + filetype
 	
-	# Slicing Math
-	inc = i*gap
-	pos1 = -W + inc
-	pos2 =  W + gap + inc
-	width = W*2
+	c = []
+	xarr = []
+	yarr = []
+	zdist = [] 
 	
-	imS = cv2.resize(img, (W, H))
-	cv2.line(imS, (pos1, 1), (pos1, H), (0,0,0), width)
-	cv2.line(imS, (pos2, 1), (pos2, H), (0,0,0), width)
-	
-	#cv2.imshow("Slice", imS)			# Feedback: Slicing Animation
-	
-	# Masking Process
-	hsv = cv2.cvtColor(imS, cv2.COLOR_BGR2HSV)
-	h = 225 * 176/255
-	s = 240
-	v = 120
-	lower = (h - 10, 100, 100)
-	upper = (h + 15, 255, 255)
-	mask = cv2.inRange(hsv, lower, upper)
-	for j in range(1):
-		mask = cv2.erode(mask, None, iterations = 1)
-		mask = cv2.dilate(mask, None, iterations = 1)
-	
-	cv2.imshow('mask', mask)			# Feedback: Masking Animation
-	
-	x,y = centroid(mask)
-	c = remember(c, (x,y))
-	draw(imS, c, (28,172,244))			# Feedback: Drawing Animation
-	
-	xarr.append(x)
-	yarr.append(y)
-	
-	time.sleep(0.1)
-	
-	if cv2.waitKey(1) > -1:
-		break
+	# Reading the Image
+	img = cv2.imread(filename)
+	imS = cv2.resize(img, (W, H))		
+	#cv2.imshow('image',imS) 				# Feedback: Resized image
 
-# Processing heights (Z)
-yarr = np.array(yarr)
-zdist = H - yarr
-jump = zdist[0]
-zdist = zdist - jump
+	for i in range(0,xcount): 
+		
+		# Slicing Math
+		inc = i*gap
+		pos1 = -W + inc
+		pos2 =  W + gap + inc
+		width = W*2
+		
+		imS = cv2.resize(img, (W, H))
+		cv2.line(imS, (pos1, 1), (pos1, H), (0,0,0), width)
+		cv2.line(imS, (pos2, 1), (pos2, H), (0,0,0), width)
+		
+		#cv2.imshow("Slice", imS)			# Feedback: Slicing Animation
+		
+		# Masking Process
+		hsv = cv2.cvtColor(imS, cv2.COLOR_BGR2HSV)
+		h = 225 * 176/255
+		s = 240
+		v = 120
+		lower = (h - 10, 100, 100)
+		upper = (h + 15, 255, 255)
+		mask = cv2.inRange(hsv, lower, upper)
+		for j in range(1):
+			mask = cv2.erode(mask, None, iterations = 1)
+			mask = cv2.dilate(mask, None, iterations = 1)
+		
+		cv2.imshow('mask', mask)			# Feedback: Masking Animation
+		
+		x,y = centroid(mask)
+		c = remember(c, (x,y))
+		draw(imS, c, (28,172,244))			# Feedback: Drawing Animation
+		
+		xarr.append(x)
+		yarr.append(y)
+		
+		time.sleep(0.001)
+		
+		if cv2.waitKey(1) > -1:
+			break
 
-for i in range(0,xcount):
-	if zdist[i] < 0:
-		zdist[i] = 0
+	# Processing heights (Z)
+	yarr = np.array(yarr)
+	zdist = H - yarr
+	jump = zdist[0]
+	zdist = zdist - jump
 
-zdist = zdist * scale
+	for i in range(0,xcount):
+		if zdist[i] < 0:
+			zdist[i] = 0
 
-# Processing slice distances (X)
-	
+	zdist = zdist * scale
 
-# Feedback
-print('c =', c)
-print()
-print('xarr = ', xarr)	
-print()
-print('yarr = ', yarr)
-print()
-print('zdist = ', zdist)
+	# Processing slice distances (X)
+
+		
+	# Building the matrix
+	matrix[scan][:] = zdist 
+
+	# Feedback
+	print('Index =', scan)
+	print()
+	#print('c =', c)
+	#print()
+	#print('xarr = ', xarr)	
+	#print()
+	#print('yarr = ', yarr)
+	#print()
+	print('zdist = ', zdist)
+	print()
 
 
-
+print('matrix = ', matrix)
 
 # Hold Image untill Key-Press
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-# NOTE1: 	We can also try cropping the original image to try and save
-#			processing time maybe? Will definitely save storage space
-#			...I think. 
-
-#			import cv2
-#			img = cv2.imread("lenna.png")
-#			crop_img = img[y:y+h, x:x+w]
-#			cv2.imshow("cropped", crop_img)
-#			cv2.waitKey(0)
+# End of Program
