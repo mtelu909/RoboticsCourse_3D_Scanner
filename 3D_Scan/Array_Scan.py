@@ -6,7 +6,7 @@
 import cv2
 import time
 import numpy as np
-import Rpi.GPIO as GPIO
+#import Rpi.GPIO as GPIO
 import os, shutil
 
 # USER INPUTS ----------------------------------------------------------
@@ -14,13 +14,13 @@ import os, shutil
 INPUT_PIN = 4           # Sets our input pin
 
 xcount = 48				# Number of slices
-scan_max = 5			# Number of pictures taken
+scan_max = 1			# Number of pictures taken
 gap = 20				# Pixel Width of slice 
 H = 540					# Pixel Height of Window
 W = 960					# Pixel Width of Window
 scale = 1				# Conversion pixels to inches (or mm)
 
-location = '/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/data'
+location = '/home/jason/RoboticsCourse_3D_Scanner/3D_Scan/data/'
 basename = 'pic'
 filetype = '.jpg'
 
@@ -63,17 +63,17 @@ def cleardata():
 
 # Capture Loop ---------------------------------------------------------
  
-GPIO.setmode(GPIO.BCM)           # Set's GPIO pins to BCM GPIO numbering
-GPIO.setup(INPUT_PIN, GPIO.IN)   # Set our input pin to be an input
+#GPIO.setmode(GPIO.BCM)           # Set's GPIO pins to BCM GPIO numbering
+#GPIO.setup(INPUT_PIN, GPIO.IN)   # Set our input pin to be an input
 
 for scan in range(0,scan_max):
 	# Wait for button press
-	while true 
-		var = GPIO.input(INPUT_PIN)	
-		if ( var == True) && (var_old == False)
-			break	
-		var_old = var
-		time.sleep(.01)
+	#while True: 
+	#	var = GPIO.input(INPUT_PIN)	
+	#	if ( var == True) & (var_old == False):
+	#		break	
+	#	var_old = var
+	#	time.sleep(.01)
 	
 	# take pic	
 	while True:
@@ -81,12 +81,11 @@ for scan in range(0,scan_max):
 		okay, frame = cap.read()
 		cap.release()
 		if okay == False:
-			continue
-				
+			continue	
 		index = str(scan)
 		filename = location + basename + index + filetype
 		cv2.imwrite(filename, frame)
-		time.sleep(.1)
+		time.sleep(1)
 		break
 	
 	# Feedback	
@@ -144,7 +143,7 @@ for scan in range(0,scan_max):
 			mask = cv2.erode(mask, None, iterations = 1)
 			mask = cv2.dilate(mask, None, iterations = 1)
 		
-		cv2.imshow('mask', mask)			# Feedback: Masking Animation
+		#cv2.imshow('mask', mask)			# Feedback: Masking Animation
 		
 		x,y = centroid(mask)
 		c = remember(c, (x,y))
@@ -160,15 +159,21 @@ for scan in range(0,scan_max):
 
 	# Processing heights (Z)
 	yarr = np.array(yarr)
-	zdist = H - yarr
-	jump = zdist[0]
-	zdist = zdist - jump
+	
+	for i in range(0,xcount):
+		if yarr[i] < 0:
+			yarr[i] = H
+	
+	
+	zpix = H - yarr 
+	jump = zpix[0]
+	zpix = zpix - jump
 
 	for i in range(0,xcount):
-		if zdist[i] < 0:
-			zdist[i] = 0
+		if zpix[i] < 0:
+			zpix[i] = 0
 
-	zdist = zdist * scale
+	zdist = zpix * scale
 
 	# Processing slice distances (X)
 
@@ -179,12 +184,12 @@ for scan in range(0,scan_max):
 	# Feedback
 	print('Index =', scan)
 	print()
-	#print('c =', c)
-	#print()
-	#print('xarr = ', xarr)	
-	#print()
-	#print('yarr = ', yarr)
-	#print()
+	print('c =', c)
+	print()
+	print('xarr = ', xarr)	
+	print()
+	print('yarr = ', yarr)
+	print()
 	print('zdist = ', zdist)
 	print()
 
