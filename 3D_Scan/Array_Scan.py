@@ -1,21 +1,21 @@
 # DESCRIPTION
 # Program to read a laserline and turn it into an array of heights
-# (Incomplete)
 
 # Initializing the Program
 import cv2
 import time
 import numpy as np
+import xlsxwriter
 
 # User Inputs ----------------------------------------------------------
 xcount = 48				# Number of slices
-scan_max = 5				# Number of pictures taken
+scan_max = 3				# Number of pictures taken
 gap = 20				# Pixel Width of slice 
 H = 540					# Pixel Height of Window
 W = 960					# Pixel Width of Window
 scale = 1				# Conversion pixels to inches (or mm)
 
-location = '/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/'
+location = '/home/jason/RoboticsCourse_3D_Scanner/3D_Scan/' # CHANGE USERNAME
 basename = 'laserline'
 filetype = '.jpg'
 
@@ -94,7 +94,7 @@ for scan in range(0,scan_max):
 			mask = cv2.erode(mask, None, iterations = 1)
 			mask = cv2.dilate(mask, None, iterations = 1)
 		
-		cv2.imshow('mask', mask)			# Feedback: Masking Animation
+		#cv2.imshow('mask', mask)			# Feedback: Masking Animation
 		
 		x,y = centroid(mask)
 		c = remember(c, (x,y))
@@ -140,6 +140,17 @@ for scan in range(0,scan_max):
 
 
 print('matrix = ', matrix)
+
+# Export data to spreadsheet
+workbook = xlsxwriter.Workbook('matrix.xlsx')
+worksheet = workbook.add_worksheet()
+
+for i in range(0,scan_max):
+	for j in range(0, xcount):
+		worksheet.write(i, j, matrix[i][j])
+
+workbook.close()
+
 
 # Hold Image untill Key-Press
 cv2.waitKey(0)
