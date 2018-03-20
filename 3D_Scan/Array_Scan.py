@@ -23,12 +23,16 @@ scan_max = 3			# Number of pictures taken
 gap = 20				# Pixel Width of slice 
 H = 540					# Pixel Height of Window
 W = 960					# Pixel Width of Window
-scale = 1				# Conversion pixels to inches (or mm)
+zscale = 1				# Conversion pixel height to dist
+xscale = 1				# Conversion pixel width to dist
+ydist = 1				# Travel increment of scanner
 
 
-location = '/home/jason/RoboticsCourse_3D_Scanner/3D_Scan/data/'
-basename = 'pic'
+location = '/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/testfiles/'
+basename = 'laserline'
 filetype = '.jpg'
+
+controlrec = 0			# Record images? Yes = 1, No = 0
 
 # Function Setup -------------------------------------------------
 
@@ -69,37 +73,40 @@ def cleardata():
 
 # Capture Loop ---------------------------------------------------------
  
-#GPIO.setmode(GPIO.BCM)           # Set's GPIO pins to BCM GPIO numbering
-#GPIO.setup(INPUT_PIN, GPIO.IN)   # Set our input pin to be an input
+if (controlrec == 1):
 
-cleardata()
+	#GPIO.setmode(GPIO.BCM)           # Set's GPIO pins to BCM GPIO numbering
+	#GPIO.setup(INPUT_PIN, GPIO.IN)   # Set our input pin to be an input
 
-for scan in range(0,scan_max):
-	
-	# Wait for button press
-	#while True: 
-	#	var = GPIO.input(INPUT_PIN)	
-	#	if ( var == True) & (var_old == False):
-	#		break	
-	#	var_old = var
-	#	time.sleep(.01)
-	
-	# take pic	
-	while True:
-		cap = cv2.VideoCapture(0)
-		okay, frame = cap.read()
-		cap.release()
-		if okay == False:
-			continue	
-		index = str(scan)
-		filename = location + basename + index + filetype
-		cv2.imwrite(filename, frame)
-		time.sleep(1)
-		break
-	
-	# Feedback	
-	print(scan)
-	print(filename)
+	cleardata()						  # Deletes Pictures
+
+	for scan in range(0,scan_max):
+		
+		# Wait for button press
+		#while True: 
+		#	var = GPIO.input(INPUT_PIN)	
+		#	if ( var == True) & (var_old == False):
+		#		break	
+		#	var_old = var
+		#	time.sleep(.01)
+		
+		# take pic	
+		while True:
+			cap = cv2.VideoCapture(0)
+			okay, frame = cap.read()
+			cap.release()
+			if okay == False:
+				continue	
+			index = str(scan)
+			filename = location + basename + index + filetype
+			cv2.imwrite(filename, frame)
+			time.sleep(1)
+			break
+		
+		# Feedback	
+		print(scan)
+		print(filename)
+
 		
 	
 			
@@ -108,7 +115,10 @@ for scan in range(0,scan_max):
 
 # Calculation Loop -----------------------------------------------------
 
-matrix = [[0 for x in range(xcount)] for y in range(scan_max)]
+
+Xmatrix = [[0 for x in range(xcount)] for y in range(scan_max)]
+Ymatrix = [[0 for x in range(xcount)] for y in range(scan_max)]
+Zmatrix = [[0 for x in range(xcount)] for y in range(scan_max)]
 
 for scan in range(0,scan_max):
 
@@ -182,13 +192,15 @@ for scan in range(0,scan_max):
 		if zpix[i] < 0:
 			zpix[i] = 0
 
-	zdist = zpix * scale
+	zdist = zpix * zscale
 
-	# Processing slice distances (X)
-
-		
+			
 	# Building the matrix
-	matrix[scan][:] = zdist 
+		
+	Xmatrix[scan][:] = np.array(range(xcount)) * gap * xscale
+	Ymatrix[scan][:] = scan * np.array([1 for x in range(xcount)]) * ydist
+	Zmatrix[scan][:] = zdist
+	 
 
 	# Feedback
 	print('Index =', scan)
@@ -201,17 +213,37 @@ for scan in range(0,scan_max):
 	print()
 	print('zdist = ', zdist)
 	print()
+	#print('kek =', kek)
+	print()
+
+print('Xmatrix = ', Xmatrix)
+print()
+print('Ymatrix = ', Ymatrix)
+print()
+print('Zmatrix = ', Zmatrix)
+
+# Exporting data -------------------------------------------------------
 
 
-print('matrix = ', matrix)
 
-# Export data to spreadsheet
-workbook = xlsxwriter.Workbook('matrix.xlsx')
-worksheet = workbook.add_worksheet()
+workbook = xlsxwriter.Workbook('Matrices.xlsx')
+worksheet = workbook.add_worksheet('Zmatrix')
 
 for i in range(0,scan_max):
 	for j in range(0, xcount):
-		worksheet.write(i, j, matrix[i][j])
+		worksheet.write(i, j, Zmatrix[i][j])
+		
+worksheet = workbook.add_worksheet('Ymatrix')
+
+for i in range(0,scan_max):
+	for j in range(0, xcount):
+		worksheet.write(i, j, Ymatrix[i][j])
+		
+worksheet = workbook.add_worksheet('Xmatrix')
+
+for i in range(0,scan_max):
+	for j in range(0, xcount):
+		worksheet.write(i, j, Xmatrix[i][j])
 
 workbook.close()
 
