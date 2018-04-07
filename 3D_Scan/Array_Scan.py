@@ -40,7 +40,7 @@ basename = 'pic'
 filetype = '.jpg'
 
 controlrec = 1			# Record images? 	Yes = 1, No = 0
-controlcalc = 1			# Calculate images?	Yes = 1, No = 0
+controlcalc = 0			# Calculate images?	Yes = 1, No = 0
 
 # Function Setup -------------------------------------------------
 
@@ -79,14 +79,36 @@ def cleardata():
 		except Exception as e:
 			print(e)
 
-# Capture Loop ---------------------------------------------------------
+
+
+
+
+# Setup Loop ---------------------------------------------------------
  
+cap = cv2.VideoCapture(0)
+
+while True:
+	# Exit if any key is pressed
+	key = cv2.waitKey(1) & 0xFF
+	if key == ord("p"):
+		cap.release()
+		break
+	
+	okay, image = cap.read()
+	
+	if okay == False:
+		continue
+	cv2.imshow('Setup Object in Frame', image)
+
+# Capture Loop ---------------------------------------------------------
+
 if (controlrec == 1):
 
 	#GPIO.setmode(GPIO.BCM)           # Set's GPIO pins to BCM GPIO numbering
 	#GPIO.setup(INPUT_PIN, GPIO.IN)   # Set our input pin to be an input
 
-	cleardata()						  # Deletes Pictures
+	cleardata()			
+				  # Deletes Pictures
 
 	for scan in range(0,scan_max):
 			
@@ -107,7 +129,7 @@ if (controlrec == 1):
 		## clear the stream in preparation for the next frame
 		#rawCapture.truncate(0)
 		
-		# Working PC capture mechanism
+		# Working PC image capture mechanism
 		cap = cv2.VideoCapture(0)
 		okay, frame = cap.read()
 		cap.release()
@@ -120,6 +142,7 @@ if (controlrec == 1):
 		cv2.imshow(picname, frame)
 		time.sleep(1)
 		
+		# Hold image utill P key pressed
 		while True:
 			key = cv2.waitKey(1) & 0xFF
 			if key == ord("p"):
