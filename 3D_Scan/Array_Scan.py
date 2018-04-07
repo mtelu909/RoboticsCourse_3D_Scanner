@@ -13,8 +13,8 @@ import xlsxwriter
 import os, shutil
 
 # RASPI AND ARDUCAM
-#from picamera.array import PiRGBArray
-#from picamera import PiCamera
+from picamera.array import PiRGBArray
+from picamera import PiCamera
 
 # COMMUNICATION
 #import Rpi.GPIO as GPIO	
@@ -33,14 +33,14 @@ zscale = 1				# Conversion pixel height to dist
 xscale = 1				# Conversion pixel width to dist
 ydist = 1				# Travel increment of scanner
 
-#location = '/home/pi/RoboticsCourse_3D_Scanner/3D_Scan/testfiles'
+location = '/home/pi/RoboticsCourse_3D_Scanner/3D_Scan/data/'
 #location = '/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/testfiles/'
-location = '/home/jason/RoboticsCourse_3D_Scanner/3D_Scan/data/'
+#location = '/home/jason/RoboticsCourse_3D_Scanner/3D_Scan/data/'
 basename = 'pic'
 filetype = '.jpg'
 
 controlrec = 1			# Record images? 	Yes = 1, No = 0
-controlcalc = 0			# Calculate images?	Yes = 1, No = 0
+controlcalc = 1			# Calculate images?	Yes = 1, No = 0
 
 # Function Setup -------------------------------------------------
 
@@ -84,63 +84,64 @@ def cleardata():
 
 
 # Setup Loop ---------------------------------------------------------
- 
-cap = cv2.VideoCapture(0)
 
-while True:
+ 
+camera = PiCamera()
+camera.vflip = True
+camera.resolution = (640, 480)
+camera.framerate = 32
+rawCapture = PiRGBArray(camera, size=(640, 480))
+ 
+# allow the camera to warmup
+time.sleep(0.1)
+
+
+	
+for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+	image = frame.array
 	# Exit if any key is pressed
 	key = cv2.waitKey(1) & 0xFF
 	if key == ord("p"):
-		cap.release()
 		break
 	
-	okay, image = cap.read()
-	
-	if okay == False:
-		continue
 	cv2.imshow('Setup Object in Frame', image)
+	rawCapture.truncate(0)
+	
+rawCapture.truncate(0)
+
 
 # Capture Loop ---------------------------------------------------------
 
 if (controlrec == 1):
-
-	#GPIO.setmode(GPIO.BCM)           # Set's GPIO pins to BCM GPIO numbering
-	#GPIO.setup(INPUT_PIN, GPIO.IN)   # Set our input pin to be an input
-
+	
 	cleardata()			
-				  # Deletes Pictures
-
 	for scan in range(0,scan_max):
-			
-		## initialize the camera and grab a reference to the raw camera capture
-		#camera = PiCamera()
-		#camera.resolution = (640, 480)
-		#camera.framerate = 32
-		#rawCapture = PiRGBArray(camera, size=(640, 480))
-		 
-		## allow the camera to warmup
-		#time.sleep(0.1)
+
+		for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+			image = frame.array
+			index = str(scan)
+			filename = location + basename + index + filetype
+			picname = basename + index
+			cv2.imwrite(filename, image)
+			cv2.imshow(picname, image)
+			time.sleep(1)
 		
-		#for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
-			#image = frame.array
-			#cv2.imwrite(filename, frame)
+			# clear the stream in preparation for the next frame
+			rawCapture.truncate(0)
+			break
 		
-		
-		## clear the stream in preparation for the next frame
-		#rawCapture.truncate(0)
-		
-		# Working PC image capture mechanism
-		cap = cv2.VideoCapture(0)
-		okay, frame = cap.read()
-		cap.release()
-		if okay == False:
-			continue	
-		index = str(scan)
-		filename = location + basename + index + filetype
-		picname = basename + index
-		cv2.imwrite(filename, frame)
-		cv2.imshow(picname, frame)
-		time.sleep(1)
+		## Working PC image capture mechanism
+		#cap = cv2.VideoCapture(0)
+		#okay, frame = cap.read()
+		#cap.release()
+		#if okay == False:
+			#continue	
+		#index = str(scan)
+		#filename = location + basename + index + filetype
+		#picname = basename + index
+		#cv2.imwrite(filename, frame)
+		#cv2.imshow(picname, frame)
+		#time.sleep(1)
 		
 		# Hold image utill P key pressed
 		while True:
@@ -153,7 +154,9 @@ if (controlrec == 1):
 		print(scan)
 		print(filename)
 
-		
+rawCapture.truncate(0)
+#camera.stop_recording()
+time.sleep(0.1)		
 	
 			
 		
