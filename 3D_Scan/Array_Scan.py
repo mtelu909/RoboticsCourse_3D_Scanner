@@ -10,8 +10,14 @@ import cv2
 import time
 import numpy as np
 import xlsxwriter
-#import Rpi.GPIO as GPIO		# Suppressed for run on PC
 import os, shutil
+
+# RASPI AND ARDUCAM
+#from picamera.array import PiRGBArray
+#from picamera import PiCamera
+
+# COMMUNICATION
+#import Rpi.GPIO as GPIO	
 
 # USER INPUTS ----------------------------------------------------------
 
@@ -27,12 +33,14 @@ zscale = 1				# Conversion pixel height to dist
 xscale = 1				# Conversion pixel width to dist
 ydist = 1				# Travel increment of scanner
 
-location = '/home/pi/RoboticsCourse_3D_Scanner/3D_Scan/testfiles'
+#location = '/home/pi/RoboticsCourse_3D_Scanner/3D_Scan/testfiles'
 #location = '/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/testfiles/'
-basename = 'laserline'
+location = '/home/jason/RoboticsCourse_3D_Scanner/3D_Scan/data/'
+basename = 'pic'
 filetype = '.jpg'
 
-controlrec = 0			# Record images? Yes = 1, No = 0
+controlrec = 1			# Record images? 	Yes = 1, No = 0
+controlcalc = 1			# Calculate images?	Yes = 1, No = 0
 
 # Function Setup -------------------------------------------------
 
@@ -81,27 +89,42 @@ if (controlrec == 1):
 	cleardata()						  # Deletes Pictures
 
 	for scan in range(0,scan_max):
+			
+		## initialize the camera and grab a reference to the raw camera capture
+		#camera = PiCamera()
+		#camera.resolution = (640, 480)
+		#camera.framerate = 32
+		#rawCapture = PiRGBArray(camera, size=(640, 480))
+		 
+		## allow the camera to warmup
+		#time.sleep(0.1)
 		
-		# Wait for button press
-		#while True: 
-		#	var = GPIO.input(INPUT_PIN)	
-		#	if ( var == True) & (var_old == False):
-		#		break	
-		#	var_old = var
-		#	time.sleep(.01)
+		#for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+			#image = frame.array
+			#cv2.imwrite(filename, frame)
 		
-		# take pic	
+		
+		## clear the stream in preparation for the next frame
+		#rawCapture.truncate(0)
+		
+		# Working PC capture mechanism
+		cap = cv2.VideoCapture(0)
+		okay, frame = cap.read()
+		cap.release()
+		if okay == False:
+			continue	
+		index = str(scan)
+		filename = location + basename + index + filetype
+		picname = basename + index
+		cv2.imwrite(filename, frame)
+		cv2.imshow(picname, frame)
+		time.sleep(1)
+		
 		while True:
-			cap = cv2.VideoCapture(0)
-			okay, frame = cap.read()
-			cap.release()
-			if okay == False:
-				continue	
-			index = str(scan)
-			filename = location + basename + index + filetype
-			cv2.imwrite(filename, frame)
-			time.sleep(1)
-			break
+			key = cv2.waitKey(1) & 0xFF
+			if key == ord("p"):
+				break
+		cv2.destroyAllWindows()
 		
 		# Feedback	
 		print(scan)
@@ -115,137 +138,138 @@ if (controlrec == 1):
 
 # Calculation Loop -----------------------------------------------------
 
+if (controlcalc == 1):
 
-Xmatrix = [[0 for x in range(xcount)] for y in range(scan_max)]
-Ymatrix = [[0 for x in range(xcount)] for y in range(scan_max)]
-Zmatrix = [[0 for x in range(xcount)] for y in range(scan_max)]
+	Xmatrix = [[0 for x in range(xcount)] for y in range(scan_max)]
+	Ymatrix = [[0 for x in range(xcount)] for y in range(scan_max)]
+	Zmatrix = [[0 for x in range(xcount)] for y in range(scan_max)]
 
-for scan in range(0,scan_max):
+	for scan in range(0,scan_max):
 
-	# Setting up Variables	
-	index = str(scan)
-	filename = location + basename + index + filetype
-	
-	c = []
-	xarr = []
-	yarr = []
-	zdist = [] 
-	
-	# Reading the Image
-	imS = cv2.imread(filename)
-	#imS = cv2.resize(img, (W, H))		
-	#cv2.imshow('image',imS) 				# Feedback: Resized image
+		# Setting up Variables	
+		index = str(scan)
+		filename = location + basename + index + filetype
+		
+		c = []
+		xarr = []
+		yarr = []
+		zdist = [] 
+		
+		# Reading the Image
+		img = cv2.imread(filename)
+		imS = cv2.resize(img, (W, H))		
+		#cv2.imshow('image',imS) 				# Feedback: Resized image
 
-	for i in range(0,xcount): 
-		
-		# Slicing Math
-		inc = i*gap
-		pos1 = -W + inc
-		pos2 =  W + gap + inc
-		width = W*2
-		
-		#imS = cv2.resize(img, (W, H))
-		cv2.line(imS, (pos1, 1), (pos1, H), (0,0,0), width)
-		cv2.line(imS, (pos2, 1), (pos2, H), (0,0,0), width)
-		
-		#cv2.imshow("Slice", imS)			# Feedback: Slicing Animation
-		
-		# Masking Process
-		hsv = cv2.cvtColor(imS, cv2.COLOR_BGR2HSV)
-		h = 225 * 176/255
-		s = 240
-		v = 120
-		lower = (h - 10, 100, 100)
-		upper = (h + 15, 255, 255)
-		mask = cv2.inRange(hsv, lower, upper)
-		for j in range(1):
-			mask = cv2.erode(mask, None, iterations = 1)
-			mask = cv2.dilate(mask, None, iterations = 1)
-		
-		#cv2.imshow('mask', mask)			# Feedback: Masking Animation
-		
-		x,y = centroid(mask)
-		c = remember(c, (x,y))
-		draw(imS, c, (28,172,244))			# Feedback: Drawing Animation
-		
-		xarr.append(x)
-		yarr.append(y)
-		
-		time.sleep(0.001)
-		
-		if cv2.waitKey(1) > -1:
-			break
-
-	# Processing heights (Z)
-	yarr = np.array(yarr)
-	
-	for i in range(0,xcount):
-		if yarr[i] < 0:
-			yarr[i] = H
-	
-	
-	zpix = H - yarr 
-	jump = zpix[0]
-	zpix = zpix - jump
-
-	for i in range(0,xcount):
-		if zpix[i] < 0:
-			zpix[i] = 0
-
-	zdist = zpix * zscale
-
+		for i in range(0,xcount): 
 			
-	# Building the matrix
+			# Slicing Math
+			inc = i*gap
+			pos1 = -W + inc
+			pos2 =  W + gap + inc
+			width = W*2
+			
+			imS = cv2.resize(img, (W, H))
+			cv2.line(imS, (pos1, 1), (pos1, H), (0,0,0), width)
+			cv2.line(imS, (pos2, 1), (pos2, H), (0,0,0), width)
+			
+			#cv2.imshow("Slice", imS)			# Feedback: Slicing Animation
+			
+			# Masking Process
+			hsv = cv2.cvtColor(imS, cv2.COLOR_BGR2HSV)
+			h = 225 * 176/255
+			s = 240
+			v = 120
+			lower = (h - 10, 100, 100)
+			upper = (h + 15, 255, 255)
+			mask = cv2.inRange(hsv, lower, upper)
+			for j in range(1):
+				mask = cv2.erode(mask, None, iterations = 1)
+				mask = cv2.dilate(mask, None, iterations = 1)
+			
+			#cv2.imshow('mask', mask)			# Feedback: Masking Animation
+			
+			x,y = centroid(mask)
+			c = remember(c, (x,y))
+			draw(imS, c, (28,172,244))			# Feedback: Drawing Animation
+			
+			xarr.append(x)
+			yarr.append(y)
+			
+			time.sleep(0.001)
+			
+			if cv2.waitKey(1) > -1:
+				break
+
+		# Processing heights (Z)
+		yarr = np.array(yarr)
 		
-	Xmatrix[scan][:] = np.array(range(xcount)) * gap * xscale
-	Ymatrix[scan][:] = scan * np.array([1 for x in range(xcount)]) * ydist
-	Zmatrix[scan][:] = zdist
-	 
-
-	# Feedback
-	print('Index =', scan)
-	print()
-	print('c =', c)
-	print()
-	print('xarr = ', xarr)	
-	print()
-	print('yarr = ', yarr)
-	print()
-	print('zdist = ', zdist)
-	print()
-	#print('kek =', kek)
-	print()
-
-print('Xmatrix = ', Xmatrix)
-print()
-print('Ymatrix = ', Ymatrix)
-print()
-print('Zmatrix = ', Zmatrix)
-
-# Exporting data -------------------------------------------------------
-
-
-
-workbook = xlsxwriter.Workbook('Matrices.xlsx')
-worksheet = workbook.add_worksheet('Zmatrix')
-
-for i in range(0,scan_max):
-	for j in range(0, xcount):
-		worksheet.write(i, j, Zmatrix[i][j])
+		for i in range(0,xcount):
+			if yarr[i] < 0:
+				yarr[i] = H
 		
-worksheet = workbook.add_worksheet('Ymatrix')
-
-for i in range(0,scan_max):
-	for j in range(0, xcount):
-		worksheet.write(i, j, Ymatrix[i][j])
 		
-worksheet = workbook.add_worksheet('Xmatrix')
+		zpix = H - yarr 
+		jump = zpix[0]
+		zpix = zpix - jump
 
-for i in range(0,scan_max):
-	for j in range(0, xcount):
-		worksheet.write(i, j, Xmatrix[i][j])
+		for i in range(0,xcount):
+			if zpix[i] < 0:
+				zpix[i] = 0
 
-workbook.close()
+		zdist = zpix * zscale
+
+				
+		# Building the matrix
+			
+		Xmatrix[scan][:] = np.array(range(xcount)) * gap * xscale
+		Ymatrix[scan][:] = scan * np.array([1 for x in range(xcount)]) * ydist
+		Zmatrix[scan][:] = zdist
+		 
+
+		# Feedback
+		print('Index =', scan)
+		print()
+		print('c =', c)
+		print()
+		print('xarr = ', xarr)	
+		print()
+		print('yarr = ', yarr)
+		print()
+		print('zdist = ', zdist)
+		print()
+		#print('kek =', kek)
+		print()
+
+	print('Xmatrix = ', Xmatrix)
+	print()
+	print('Ymatrix = ', Ymatrix)
+	print()
+	print('Zmatrix = ', Zmatrix)
+
+	# Exporting data -------------------------------------------------------
+
+
+
+	workbook = xlsxwriter.Workbook('Matrices.xlsx')
+	worksheet = workbook.add_worksheet('Zmatrix')
+
+	for i in range(0,scan_max):
+		for j in range(0, xcount):
+			worksheet.write(i, j, Zmatrix[i][j])
+			
+	worksheet = workbook.add_worksheet('Ymatrix')
+
+	for i in range(0,scan_max):
+		for j in range(0, xcount):
+			worksheet.write(i, j, Ymatrix[i][j])
+			
+	worksheet = workbook.add_worksheet('Xmatrix')
+
+	for i in range(0,scan_max):
+		for j in range(0, xcount):
+			worksheet.write(i, j, Xmatrix[i][j])
+
+	workbook.close()
 
 
 # Hold Image untill Key-Press
