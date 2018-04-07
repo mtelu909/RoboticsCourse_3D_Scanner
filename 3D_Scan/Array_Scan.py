@@ -27,8 +27,8 @@ zscale = 1				# Conversion pixel height to dist
 xscale = 1				# Conversion pixel width to dist
 ydist = 1				# Travel increment of scanner
 
-
-location = '/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/testfiles/'
+location = '/home/pi/RoboticsCourse_3D_Scanner/3D_Scan/testfiles'
+#location = '/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/testfiles/'
 basename = 'laserline'
 filetype = '.jpg'
 
@@ -132,8 +132,8 @@ for scan in range(0,scan_max):
 	zdist = [] 
 	
 	# Reading the Image
-	img = cv2.imread(filename)
-	imS = cv2.resize(img, (W, H))		
+	imS = cv2.imread(filename)
+	#imS = cv2.resize(img, (W, H))		
 	#cv2.imshow('image',imS) 				# Feedback: Resized image
 
 	for i in range(0,xcount): 
@@ -144,7 +144,7 @@ for scan in range(0,scan_max):
 		pos2 =  W + gap + inc
 		width = W*2
 		
-		imS = cv2.resize(img, (W, H))
+		#imS = cv2.resize(img, (W, H))
 		cv2.line(imS, (pos1, 1), (pos1, H), (0,0,0), width)
 		cv2.line(imS, (pos2, 1), (pos2, H), (0,0,0), width)
 		
