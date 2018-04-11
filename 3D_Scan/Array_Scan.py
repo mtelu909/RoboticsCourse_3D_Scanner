@@ -15,6 +15,7 @@ import os, shutil
 # RASPI AND ARDUCAM
 from picamera.array import PiRGBArray
 from picamera import PiCamera
+import serial
 
 # COMMUNICATION
 #import Rpi.GPIO as GPIO	
@@ -99,6 +100,7 @@ time.sleep(0.1)
 	
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 	image = frame.array
+	
 	# Exit if any key is pressed
 	key = cv2.waitKey(1) & 0xFF
 	if key == ord("p"):
@@ -112,6 +114,10 @@ rawCapture.truncate(0)
 
 # Capture Loop ---------------------------------------------------------
 
+ser = serial.Serial('/dev/ttyACM0',9600)
+s = [0,1]
+piclog = -1
+
 if (controlrec == 1):
 	
 	cleardata()			
@@ -124,7 +130,7 @@ if (controlrec == 1):
 			picname = basename + index
 			cv2.imwrite(filename, image)
 			cv2.imshow(picname, image)
-			time.sleep(1)
+			time.sleep(.1)
 		
 			# clear the stream in preparation for the next frame
 			rawCapture.truncate(0)
@@ -143,11 +149,25 @@ if (controlrec == 1):
 		#cv2.imshow(picname, frame)
 		#time.sleep(1)
 		
-		# Hold image utill P key pressed
+		# Hold untill P key pressed
 		while True:
 			key = cv2.waitKey(1) & 0xFF
 			if key == ord("p"):
 				break
+				
+		# Hold untill trigger criterio
+		
+		
+		while True:
+			read_serial=ser.readline()
+			s[0] = str(int (ser.readline(),16))
+			print('Serial read =', s[0])
+			#print(read_serial)
+			if s[0] > piclog
+				piclog = s[0]
+				break
+		
+		
 		cv2.destroyAllWindows()
 		
 		# Feedback	
