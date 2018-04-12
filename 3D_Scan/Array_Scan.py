@@ -40,8 +40,9 @@ location = '/home/pi/RoboticsCourse_3D_Scanner/3D_Scan/data/'
 basename = 'pic'
 filetype = '.jpg'
 
-controlrec = 1			# Record images? 	Yes = 1, No = 0
-controlcalc = 1			# Calculate images?	Yes = 1, No = 0
+controlrec = 1			# Record images? 			Yes = 1, No = 0
+controlcalc = 0			# Calculate images?			Yes = 1, No = 0
+controlkey = 0			# Control Type?			Serial = 1, Manual = 0
 
 # Function Setup -------------------------------------------------
 
@@ -104,6 +105,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 	# Exit if any key is pressed
 	key = cv2.waitKey(1) & 0xFF
 	if key == ord("p"):
+		cv2.destroyAllWindows()
 		break
 	
 	cv2.imshow('Setup Object in Frame', image)
@@ -114,9 +116,10 @@ rawCapture.truncate(0)
 
 # Capture Loop ---------------------------------------------------------
 
-ser = serial.Serial('/dev/ttyACM0',9600)
-s = [0,1]
-piclog = -1
+if (controlkey == 1):
+	ser = serial.Serial('/dev/ttyACM0',9600)
+	s = [0,1]
+	piclog = -1
 
 if (controlrec == 1):
 	
@@ -149,23 +152,23 @@ if (controlrec == 1):
 		#cv2.imshow(picname, frame)
 		#time.sleep(1)
 		
-		# Hold untill P key pressed
-		while True:
-			key = cv2.waitKey(1) & 0xFF
-			if key == ord("p"):
-				break
-				
-		# Hold untill trigger criterio
+		# Manual trigger criterion (P key)
+		if (controlkey == 0):
+			while True:
+				key = cv2.waitKey(1) & 0xFF
+				if key == ord("p"):
+					break
 		
-		
-		while True:
-			read_serial=ser.readline()
-			s[0] = str(int (ser.readline(),16))
-			print('Serial read =', s[0])
-			#print(read_serial)
-			if s[0] > piclog
-				piclog = s[0]
-				break
+		# Serial trigger criterion		
+		if (controlkey == 1):
+			while True:
+				read_serial=ser.readline()
+				s[0] = str(int (ser.readline(),16))
+				print('Serial read =', s[0])
+				#print(read_serial)
+				if (s[0] > piclog):
+					piclog = s[0]
+					break
 		
 		
 		cv2.destroyAllWindows()
@@ -182,7 +185,7 @@ time.sleep(0.1)
 		
 		
 
-# Calculation Loop -----------------------------------------------------
+# Image Calculation Loop -----------------------------------------------
 
 if (controlcalc == 1):
 
