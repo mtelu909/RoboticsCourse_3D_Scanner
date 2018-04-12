@@ -42,7 +42,7 @@ filetype = '.jpg'
 
 controlrec = 1			# Record images? 			Yes = 1, No = 0
 controlcalc = 0			# Calculate images?			Yes = 1, No = 0
-controlkey = 0			# Control Type?			Serial = 1, Manual = 0
+controlkey = 1			# Control Type?			Serial = 1, Manual = 0
 
 # Function Setup -------------------------------------------------
 
@@ -163,9 +163,8 @@ if (controlrec == 1):
 		if (controlkey == 1):
 			while True:
 				read_serial=ser.readline()
-				s[0] = str(int (ser.readline(),16))
+				s[0] = int(ser.readline(),16)
 				print('Serial read =', s[0])
-				#print(read_serial)
 				if (s[0] > piclog):
 					piclog = s[0]
 					break
@@ -176,6 +175,7 @@ if (controlrec == 1):
 		# Feedback	
 		print(scan)
 		print(filename)
+		print(piclog)
 
 rawCapture.truncate(0)
 #camera.stop_recording()
@@ -326,3 +326,5 @@ cv2.waitKey(0)
 cv2.destroyAllWindows()
 
 # End of Program
+print()
+print('End of Program!')

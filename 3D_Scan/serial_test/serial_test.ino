@@ -6,8 +6,9 @@ Serial.begin(9600);              //Starting serial communication
 }
   
 void loop() {
-  a++;                          // a value increase every loop
+  a=a+5;                          // a value increase every loop
   sprintf(dataString,"%02X",a); // convert a value to hexa 
   Serial.println(dataString);   // send the data
-  delay(1000);                  // give the loop some break
+  //Serial.println(a);
+  delay(3000);                  // give the loop some break
 }
