@@ -24,17 +24,8 @@ import serial
 
 INPUT_PIN = 4           # Sets our input pin
 
-xcount = 80				# Number of slices
-scan_max = 29			# Number of pictures taken
-
-gap = 10				# Pixel Width of slice
-offset = 160			# Pixel offset of slice 
-H = 540					# Pixel Height of Window
-W = 960					# Pixel Width of Window
-zscale = 1				# Conversion pixel height to dist
-xscale = 1				# Conversion pixel width to dist
-ydist = 1				# Travel increment of scanner
-	#6.37 #mm per grpah paper square
+xcount = 80				# Number of slices (80 -> gap=10pix)
+scan_max = 1			# Number of pictures taken
 
 location = '/home/pi/RoboticsCourse_3D_Scanner/3D_Scan/data/'
 #location = '/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/testfiles/'
@@ -47,6 +38,19 @@ controlcalc = 1			# Calculate images?			Yes = 1, No = 0
 controlkey = 0			# Control Tiggering?	Serial = 1, Manual = 0
 
 # CONSTANTS ------------------------------------------------------------
+
+H = 540					# Pixel Height of Window
+W = 960					# Pixel Width of Window
+offset = 160			# Pixel offset of slice
+#gap = 10				# Pixel Width of slice
+
+gap= int((W - offset)/xcount)
+ 
+
+zscale = 1				# Conversion pixel height to dist
+xscale = 1				# Conversion pixel width to dist
+ydist = 1				# Travel increment of scanner
+	#6.37 #mm per grpah paper square
 
 # Function Setup -------------------------------------------------------
 
