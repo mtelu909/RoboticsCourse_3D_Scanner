@@ -24,15 +24,8 @@ import serial
 
 INPUT_PIN = 4           # Sets our input pin
 
-xcount = 48				# Number of slices
-scan_max = 3			# Number of pictures taken
-
-gap = 20				# Pixel Width of slice 
-H = 540					# Pixel Height of Window
-W = 960					# Pixel Width of Window
-zscale = 1				# Conversion pixel height to dist
-xscale = 1				# Conversion pixel width to dist
-ydist = 1				# Travel increment of scanner
+xcount = 80				# Number of slices (80 -> gap=10pix)
+scan_max = 1			# Number of pictures taken
 
 location = '/home/pi/RoboticsCourse_3D_Scanner/3D_Scan/data/'
 #location = '/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/testfiles/'
@@ -41,10 +34,25 @@ basename = 'pic'
 filetype = '.jpg'
 
 controlrec = 1			# Record images? 			Yes = 1, No = 0
-controlcalc = 0			# Calculate images?			Yes = 1, No = 0
-controlkey = 1			# Control Type?			Serial = 1, Manual = 0
+controlcalc = 1			# Calculate images?			Yes = 1, No = 0
+controlkey = 0			# Control Tiggering?	Serial = 1, Manual = 0
 
-# Function Setup -------------------------------------------------
+# CONSTANTS ------------------------------------------------------------
+
+H = 540					# Pixel Height of Window
+W = 960					# Pixel Width of Window
+offset = 160			# Pixel offset of slice
+#gap = 10				# Pixel Width of slice
+
+gap= int((W - offset)/xcount)
+ 
+
+zscale = 1				# Conversion pixel height to dist
+xscale = 1				# Conversion pixel width to dist
+ydist = 1				# Travel increment of scanner
+	#6.37 #mm per grpah paper square
+
+# Function Setup -------------------------------------------------------
 
 def centroid( mask ):
 	M = cv2.moments(mask,True)
@@ -107,6 +115,12 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 	if key == ord("p"):
 		cv2.destroyAllWindows()
 		break
+	
+	
+	
+	pos1 = -W + 0 + offset
+	width = W*2
+	cv2.line(image, (pos1, 1), (pos1, H), (0,0,0), width)
 	
 	cv2.imshow('Setup Object in Frame', image)
 	rawCapture.truncate(0)
@@ -175,7 +189,8 @@ if (controlrec == 1):
 		# Feedback	
 		print(scan)
 		print(filename)
-		print(piclog)
+		if (controlkey == 1):
+			print(piclog)
 
 rawCapture.truncate(0)
 #camera.stop_recording()
@@ -213,8 +228,8 @@ if (controlcalc == 1):
 			
 			# Slicing Math
 			inc = i*gap
-			pos1 = -W + inc
-			pos2 =  W + gap + inc
+			pos1 = -W + inc + offset
+			pos2 =  W + gap + inc + offset
 			width = W*2
 			
 			imS = cv2.resize(img, (W, H))
@@ -320,11 +335,15 @@ if (controlcalc == 1):
 
 	workbook.close()
 
+# End of Program
+print()
+print('End of Program!')
 
 # Hold Image untill Key-Press
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
-# End of Program
 print()
-print('End of Program!')
+print('Program Terminated!')
+
+
