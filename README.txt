@@ -36,5 +36,3 @@ To do this we shall use the laserline.jpg and Array_Scan.py code included in the
 	Notes:
 
 	- To run the code on your home computer you will have to change the filepath of the 		  laserline your are trying to process. The computers "username" is probably different 		  than the name attached.
-
-
