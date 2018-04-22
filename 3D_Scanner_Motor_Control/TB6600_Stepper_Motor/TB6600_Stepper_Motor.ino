@@ -6,7 +6,7 @@ String rpmString = String();
 int conv_int = 50;
 int cycle = 0;
 long int n = 0;
-
+//------------------------------------------------------------------
 void setup() {
   Serial.begin(9600);
   
@@ -48,8 +48,21 @@ void full_stop(){
     //digitalWrite(PUL,LOW);
     //delayMicroseconds(rpm);
 }
+// -----------------------------------------------------------------
 void loop() {
  cycle = 10000;
+ 
+// SERIAL DATA IN -------------
+ 
+if(Serial.available()){
+  String datain = String(Serial.read());
+  int data1 = datain.toInt();
+  delay(250);
+  // data1 = # of pictures that will be taken (ex: 29)
+}
+
+//-------------------------------
+ 
  while (Serial.available()) {
     char c = Serial.read();  //gets one byte from serial buffer
     rpmString += c; //makes the String readString
@@ -80,6 +93,16 @@ void loop() {
   full_stop(); 
  }
  n = n + 1;
+ 
+// SERIAL DATA OUT ----------
+ 
+ char dataout[1];
+ int data = n;                    // max number is +- 32767
+ String dataout = String(data);
+ Serial.println(dataout);
+ delay(100);             
+
+// -----------------------------
  
  //Serial.print(" Cycle value n = ");
  //Serial.println(n);

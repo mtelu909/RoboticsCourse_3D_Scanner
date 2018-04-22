@@ -15,17 +15,14 @@ import os, shutil
 # RASPI AND ARDUCAM
 from picamera.array import PiRGBArray
 from picamera import PiCamera
-import serial
-
-# COMMUNICATION
-#import Rpi.GPIO as GPIO	
+import serial	
 
 # USER INPUTS ----------------------------------------------------------
 
 INPUT_PIN = 4           # Sets our input pin
 
 xcount = 80				# Number of slices (80 -> gap=10pix)
-scan_max = 1			# Number of pictures taken
+scan_max = 1			# Number of pictures taken (max = 255)
 
 location = '/home/pi/RoboticsCourse_3D_Scanner/3D_Scan/data/'
 #location = '/home/enmar/RoboticsCourse_3D_Scanner/3D_Scan/testfiles/'
@@ -130,10 +127,17 @@ rawCapture.truncate(0)
 
 # Capture Loop ---------------------------------------------------------
 
+# setting up communication and sending picture count to INO
 if (controlkey == 1):
 	ser = serial.Serial('/dev/ttyACM0',9600)
-	s = [0,1]
+	sleep(.1)
+
+	dataout = scan_max              # Valid range is 0 to 255
+	ser.write(bytes([dataout]))
+	
 	piclog = -1
+	
+	
 
 if (controlrec == 1):
 	
@@ -173,14 +177,14 @@ if (controlrec == 1):
 				if key == ord("p"):
 					break
 		
-		# Serial trigger criterion		
+		# Serial DATAIN trigger criterion		
 		if (controlkey == 1):
 			while True:
-				read_serial=ser.readline()
-				s[0] = int(ser.readline(),16)
-				print('Serial read =', s[0])
-				if (s[0] > piclog):
-					piclog = s[0]
+				datain = str(int (ser.readline(),10))
+				datain = int(data)
+				
+				if (datain > piclog):
+					piclog = datain
 					break
 		
 		
